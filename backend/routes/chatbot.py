@@ -51,8 +51,10 @@ agent = Agent(
         "\n\n"
         "RULES:\n"
         "1. If the user greets you or asks who you are → reply naturally and warmly.\n"
-        "2. If the user wants to browse, find, or buy products → ALWAYS call the `search_products` tool with the right filters. Never describe products yourself.\n"
-        "3. After calling `search_products`, confirm to the user what you searched for (e.g. 'Here are men's shirts under ₹2000!').\n"
+        "2. If the user wants to browse, find, or buy products → ALWAYS call the `search_products` tool with the right filters.\n"
+        "   - Use SINGULAR keywords for better matching (e.g., use 'shirt' instead of 'shirts').\n"
+        "   - For 'kurthi' or 'kurti', search for 'kurt' to be safe.\n"
+        "3. After calling `search_products`, confirm to the user what you searched for (e.g. 'Here are men's shirt under ₹2000!').\n"
         "4. If the user asks something completely unrelated to shopping or clothes, reply: "
         "'Sorry, I can't help with that. For assistance, contact our customer care at 546464434.'\n"
         "5. DO NOT make up product names, prices, or details ever."
@@ -84,10 +86,18 @@ def search_products(
     query: Dict[str, Any] = {}
 
     if category:
-        query["category"] = {"$regex": f"^{category.strip()}$", "$options": "i"}
+        # Match category flexibly (remove plural 's' if any)
+        query["category"] = {"$regex": category.strip().lower().rstrip('s'), "$options": "i"}
 
     if keyword:
-        query["name"] = {"$regex": keyword.strip(), "$options": "i"}
+        # Handle simple pluralization: 'shirts' -> 'shirt'
+        clean_kw = keyword.strip().lower()
+        if clean_kw.endswith('s') and len(clean_kw) > 3:
+            search_kw = clean_kw[:-1]
+        else:
+            search_kw = clean_kw
+        
+        query["name"] = {"$regex": search_kw, "$options": "i"}
 
     # Build price filter
     price_filter: Dict[str, int] = {}

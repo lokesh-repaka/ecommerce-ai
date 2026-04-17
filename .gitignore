@@ -159,3 +159,7 @@ Icon
 .Spotlight-V100
 .fseventsd
 .logfire
+
+# Jupyter Notebooks and secrets
+*.ipynb
+.ipynb_checkpoints/
